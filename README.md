@@ -40,7 +40,23 @@ aloy/
 
 ## Instalação e Execução
 
-### Desenvolvimento Local
+### 🐳 Docker (Recomendado)
+
+A forma mais fácil de executar a aplicação Aloy é usando Docker:
+
+```bash
+# Configuração automática completa
+./scripts/init.sh
+
+# OU configuração manual
+make setup
+vim .env  # Editar configurações
+make start
+```
+
+📚 **Para instruções detalhadas sobre Docker, consulte [DOCKER.md](./DOCKER.md)**
+
+### 🔧 Desenvolvimento Local
 
 1. Clone o repositório:
 
@@ -49,19 +65,77 @@ git clone git@github.com:LuisMarchio03/aloy-monorepo.git
 cd aloy-monorepo
 ```
 
-1. Inicialize os submódulos:
+2. Inicialize os submódulos:
 
 ```bash
 git submodule update --init --recursive
 ```
 
-1. Configure cada módulo individualmente seguindo as instruções em seus respectivos diretórios.
+3. Configure cada módulo individualmente seguindo as instruções em seus respectivos diretórios.
 
 **📖 Para instruções detalhadas sobre como trabalhar com submódulos, consulte [SUBMODULES.md](./SUBMODULES.md)**
 
-### Docker
+### 🚀 Comandos Rápidos
 
-Para executar com Docker, utilize os arquivos de configuração no diretório `docker/`.
+```bash
+# Ver todos os comandos disponíveis
+make help
+
+# Iniciar desenvolvimento
+make dev
+make dev-core      # Executar Core service
+make dev-nlp       # Executar NLP service
+
+# Produção
+make start         # Iniciar tudo
+make status        # Verificar status
+make logs          # Ver logs
+make stop          # Parar tudo
+
+# Gerenciar ambiente
+make env-sync      # Sincronizar .env
+make env-check     # Verificar configuração
+make env-backup    # Backup das configurações
+
+# Manutenção
+make clean         # Limpar containers
+make backup        # Backup dos dados
+```
+
+## 🔧 Gerenciamento de Variáveis de Ambiente
+
+O sistema Aloy usa um **sistema centralizado de variáveis de ambiente** com:
+
+- **`.env` global**: Configurações compartilhadas por toda a aplicação
+- **`.env` por módulo**: Configurações específicas de cada serviço
+- **Sincronização automática**: As variáveis globais são propagadas automaticamente
+
+### 📋 Portas do Sistema
+
+```
+Frontend:          1000-1099
+APIs Principais:   1100-1199  (Core: 1100, Gateway: 1101)
+NLP/AI:           1200-1299  (NLP: 1200, STT: 1201, TTS: 1202)
+Serviços:         1300-1399  (Monitor: 1300, Scheduler: 1301)
+Integrações:      1400-1499  (Google: 1400)
+Ferramentas:      1500-1599  (Focalboard: 1500)
+Monitoramento:    1600-1699  (Prometheus: 1600, Grafana: 1601)
+Banco de Dados:   1700-1799  (Postgres: 1700, MinIO: 1701)
+Mensageria:       1800-1899  (RabbitMQ: 1800/1801)
+Desenvolvimento:  9000-9099  (Mocks: 9000)
+```
+
+📚 **Ver mapa completo de portas em [PORTS.md](./PORTS.md)**
+
+### 🛠️ Comandos de Environment
+
+```bash
+make env-help      # Ajuda do gerenciador
+make env-sync      # Sincronizar variáveis globais
+make env-validate  # Validar arquivos .env
+make env-list      # Listar todas as variáveis
+make env-backup    # Backup das configurações
+```
 
 ## Contribuição
 

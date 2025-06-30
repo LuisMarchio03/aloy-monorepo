@@ -1,0 +1,206 @@
+version: '3.8'
+
+services:
+  # Banco de dados PostgreSQL
+  postgres:
+    image: postgres:15-alpine
+    container_name: aloy_postgres
+    environment:
+      POSTGRES_DB: aloy
+      POSTGRES_USER: aloy
+      POSTGRES_PASSWORD: aloy123
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "1700:5432"
+    networks:
+      - aloy_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aloy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Message Broker RabbitMQ
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: aloy_rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: aloy
+      RABBITMQ_DEFAULT_PASS: aloy123
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    ports:
+      - "1800:5672"
+      - "1801:15672"
+    networks:
+      - aloy_network
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis para cache
+  redis:
+    image: redis:7-alpine
+    container_name: aloy_redis
+    command: redis-server --appendonly yes --requirepass aloy123
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - aloy_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Core Service (Go)
+  core:
+    build:
+      context: .
+      dockerfile: docker/core/Dockerfile
+    container_name: aloy_core
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=aloy
+      - DB_USER=aloy
+      - DB_PASSWORD=aloy123
+      - RABBITMQ_URL=amqp://aloy:aloy123@rabbitmq:5672/
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=aloy123
+      - PORT=8080
+    ports:
+      - "1100:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - aloy_network
+    restart: unless-stopped
+
+  # NLP Service (Python)
+  nlp:
+    build:
+      context: .
+      dockerfile: docker/nlp/Dockerfile
+    container_name: aloy_nlp
+    environment:
+      - PORT=8001
+      - RABBITMQ_URL=amqp://aloy:aloy123@rabbitmq:5672/
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=aloy123
+    ports:
+      - "1200:8001"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - aloy_network
+    restart: unless-stopped
+
+  # Scheduler Service (Node.js)
+  scheduler:
+    build:
+      context: .
+      dockerfile: docker/scheduler/Dockerfile
+    container_name: aloy_scheduler
+    environment:
+      - RABBITMQ_URL=amqp://aloy:aloy123@rabbitmq:5672/
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=aloy
+      - DB_USER=aloy
+      - DB_PASSWORD=aloy123
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - aloy_network
+    restart: unless-stopped
+
+  # System Monitor Service (Go)
+  sysmonitor:
+    build:
+      context: .
+      dockerfile: docker/sysmonitor/Dockerfile
+    container_name: aloy_sysmonitor
+    environment:
+      - PORT=8002
+      - RABBITMQ_URL=amqp://aloy:aloy123@rabbitmq:5672/
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=aloy123
+    ports:
+      - "1300:8002"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - aloy_network
+    restart: unless-stopped
+
+  # Task Sync Service (Go)
+  tasksync:
+    build:
+      context: .
+      dockerfile: docker/tasksync/Dockerfile
+    container_name: aloy_tasksync
+    environment:
+      - RABBITMQ_URL=amqp://aloy:aloy123@rabbitmq:5672/
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=aloy
+      - DB_USER=aloy
+      - DB_PASSWORD=aloy123
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - aloy_network
+    restart: unless-stopped
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: aloy_nginx
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - core
+      - nlp
+      - sysmonitor
+    networks:
+      - aloy_network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  rabbitmq_data:
+  redis_data:
+
+networks:
+  aloy_network:
+    driver: bridge
