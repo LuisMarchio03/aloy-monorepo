@@ -43,12 +43,21 @@ aloy/
 ### Desenvolvimento Local
 
 1. Clone o repositório:
+
 ```bash
 git clone git@github.com:LuisMarchio03/aloy-monorepo.git
 cd aloy-monorepo
 ```
 
-2. Configure cada módulo individualmente seguindo as instruções em seus respectivos diretórios.
+1. Inicialize os submódulos:
+
+```bash
+git submodule update --init --recursive
+```
+
+1. Configure cada módulo individualmente seguindo as instruções em seus respectivos diretórios.
+
+**📖 Para instruções detalhadas sobre como trabalhar com submódulos, consulte [SUBMODULES.md](./SUBMODULES.md)**
 
 ### Docker
 
