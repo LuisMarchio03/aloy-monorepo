@@ -118,6 +118,14 @@ env-template: ## Gerar templates .env.example para cada módulo
 	@echo "$(BLUE)📝 Gerando templates .env.example...$(NC)"
 	@./scripts/env-manager.sh template
 
+nginx-config: ## Gerar configuração do Nginx com variáveis atuais
+	@echo "$(BLUE)⚙️ Gerando configuração do Nginx...$(NC)"
+	@./scripts/generate-nginx-config.sh
+
+check-ports: ## Verificar se todas as portas estão disponíveis
+	@echo "$(BLUE)🔍 Verificando disponibilidade de portas...$(NC)"
+	@./scripts/check-ports.sh
+
 # Comandos específicos de desenvolvimento
 dev-core: ## Executar Core em modo dev
 	@echo "$(BLUE)🔧 Iniciando Core em modo desenvolvimento...$(NC)"
@@ -224,12 +232,12 @@ shell-redis: ## Acessar shell do Redis
 # Comandos para URLs úteis
 urls: ## Mostrar URLs dos serviços
 	@echo "$(BLUE)🌐 URLs dos serviços:$(NC)"
-	@echo "  Core API:           http://localhost:1100"
-	@echo "  NLP Service:        http://localhost:1200"
-	@echo "  System Monitor:     http://localhost:1300"
-	@echo "  Scheduler:          http://localhost:1301"
-	@echo "  Task Sync:          http://localhost:1302"
+	@source .env 2>/dev/null && echo "  Core API:           http://localhost:$${ALOY_CORE_PORT:-1100}" || echo "  Core API:           http://localhost:1100"
+	@source .env 2>/dev/null && echo "  NLP Service:        http://localhost:$${ALOY_NLP_PORT:-1200}" || echo "  NLP Service:        http://localhost:1200"
+	@source .env 2>/dev/null && echo "  System Monitor:     http://localhost:$${ALOY_SYSTEM_MONITOR_PORT:-1300}" || echo "  System Monitor:     http://localhost:1300"
+	@source .env 2>/dev/null && echo "  Scheduler:          http://localhost:$${ALOY_SCHEDULER_PORT:-1301}" || echo "  Scheduler:          http://localhost:1301"
+	@source .env 2>/dev/null && echo "  Task Sync:          http://localhost:$${ALOY_TASK_SYNC_PORT:-1302}" || echo "  Task Sync:          http://localhost:1302"
 	@echo "  Nginx (Proxy):      http://localhost"
-	@echo "  RabbitMQ Mgmt:      http://localhost:1801 (aloy/aloy123)"
-	@echo "  PostgreSQL:         localhost:1700 (aloy/aloy123)"
-	@echo "  Redis:              localhost:6379 (senha: aloy123)"
+	@source .env 2>/dev/null && echo "  RabbitMQ Mgmt:      http://localhost:$${RABBITMQ_UI_PORT:-1801} ($${RABBITMQ_USER:-aloy}/$${RABBITMQ_PASSWORD:-aloy123})" || echo "  RabbitMQ Mgmt:      http://localhost:1801 (aloy/aloy123)"
+	@source .env 2>/dev/null && echo "  PostgreSQL:         localhost:$${POSTGRES_PORT:-1700} ($${POSTGRES_USER:-aloy}/$${POSTGRES_PASSWORD:-aloy123})" || echo "  PostgreSQL:         localhost:1700 (aloy/aloy123)"
+	@source .env 2>/dev/null && echo "  Redis:              localhost:$${REDIS_PORT:-6379} (senha: $${REDIS_PASSWORD:-aloy123})" || echo "  Redis:              localhost:6379 (senha: aloy123)"

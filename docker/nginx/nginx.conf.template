@@ -16,11 +16,11 @@ http {
     }
 
     upstream scheduler_backend {
-        server scheduler:;
+        server scheduler:${ALOY_SCHEDULER_PORT};
     }
 
     upstream tasksync_backend {
-        server tasksync:;
+        server tasksync:${ALOY_TASK_SYNC_PORT};
     }
 
     server {

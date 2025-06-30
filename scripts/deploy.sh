@@ -175,6 +175,11 @@ wait_for_databases() {
 wait_for_services() {
     log "Aguardando serviços de aplicação ficarem prontos..."
     
+    # Carregar variáveis de ambiente
+    if [ -f ".env" ]; then
+        source .env
+    fi
+    
     local max_attempts=30
     local attempt=1
     
@@ -182,17 +187,17 @@ wait_for_services() {
         local healthy_services=0
         
         # Verificar Core
-        if curl -sSf http://localhost:8080/health > /dev/null 2>&1; then
+        if curl -sSf http://localhost:${ALOY_CORE_PORT:-1100}/health > /dev/null 2>&1; then
             healthy_services=$((healthy_services + 1))
         fi
         
         # Verificar NLP
-        if curl -sSf http://localhost:8001/health > /dev/null 2>&1; then
+        if curl -sSf http://localhost:${ALOY_NLP_PORT:-1200}/health > /dev/null 2>&1; then
             healthy_services=$((healthy_services + 1))
         fi
         
         # Verificar SysMonitor
-        if curl -sSf http://localhost:8002/health > /dev/null 2>&1; then
+        if curl -sSf http://localhost:${ALOY_SYSTEM_MONITOR_PORT:-1300}/health > /dev/null 2>&1; then
             healthy_services=$((healthy_services + 1))
         fi
         
@@ -294,10 +299,12 @@ main() {
         echo ""
         echo "🌐 Serviços disponíveis:"
         echo "  - API Principal: http://localhost"
-        echo "  - Core API: http://localhost:8080"
-        echo "  - NLP Service: http://localhost:8001"
-        echo "  - System Monitor: http://localhost:8002"
-        echo "  - RabbitMQ Mgmt: http://localhost:15672"
+        echo "  - Core API: http://localhost:${ALOY_CORE_PORT:-1100}"
+        echo "  - NLP Service: http://localhost:${ALOY_NLP_PORT:-1200}"
+        echo "  - System Monitor: http://localhost:${ALOY_SYSTEM_MONITOR_PORT:-1300}"
+        echo "  - Scheduler: http://localhost:${ALOY_SCHEDULER_PORT:-1301}"
+        echo "  - Task Sync: http://localhost:${ALOY_TASK_SYNC_PORT:-1302}"
+        echo "  - RabbitMQ Mgmt: http://localhost:${RABBITMQ_UI_PORT:-1801}"
         echo ""
         echo "Para monitorar: make status"
         echo "Para ver logs: make logs"

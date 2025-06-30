@@ -122,15 +122,23 @@ echo ""
 
 # Verificar conectividade de portas
 echo "🔌 Verificando Conectividade:"
+
+# Carregar variáveis de ambiente
+if [ -f ".env" ]; then
+    source .env
+fi
+
 ports=(
-    "localhost:5432:PostgreSQL"
-    "localhost:5672:RabbitMQ"
-    "localhost:6379:Redis"
-    "localhost:8080:Core API"
-    "localhost:8001:NLP Service"
-    "localhost:8002:System Monitor"
+    "localhost:${POSTGRES_PORT:-1700}:PostgreSQL"
+    "localhost:${RABBITMQ_AMQP_PORT:-1800}:RabbitMQ"
+    "localhost:${REDIS_PORT:-6379}:Redis"
+    "localhost:${ALOY_CORE_PORT:-1100}:Core API"
+    "localhost:${ALOY_NLP_PORT:-1200}:NLP Service"
+    "localhost:${ALOY_SYSTEM_MONITOR_PORT:-1300}:System Monitor"
+    "localhost:${ALOY_SCHEDULER_PORT:-1301}:Scheduler"
+    "localhost:${ALOY_TASK_SYNC_PORT:-1302}:Task Sync"
     "localhost:80:Nginx"
-    "localhost:15672:RabbitMQ Management"
+    "localhost:${RABBITMQ_UI_PORT:-1801}:RabbitMQ Management"
 )
 
 for port_info in "${ports[@]}"; do
@@ -145,12 +153,18 @@ echo ""
 
 # Verificar APIs HTTP
 echo "🌐 Verificando APIs HTTP:"
+
+# Carregar variáveis se ainda não carregadas
+if [ -z "${ALOY_CORE_PORT}" ] && [ -f ".env" ]; then
+    source .env
+fi
+
 apis=(
     "http://localhost/health:Nginx Health"
-    "http://localhost:8080/health:Core API"
-    "http://localhost:8001/health:NLP Service"
-    "http://localhost:8002/health:System Monitor"
-    "http://localhost:15672:RabbitMQ Management"
+    "http://localhost:${ALOY_CORE_PORT:-1100}/health:Core API"
+    "http://localhost:${ALOY_NLP_PORT:-1200}/health:NLP Service"
+    "http://localhost:${ALOY_SYSTEM_MONITOR_PORT:-1300}/health:System Monitor"
+    "http://localhost:${RABBITMQ_UI_PORT:-1801}:RabbitMQ Management"
 )
 
 for api_info in "${apis[@]}"; do

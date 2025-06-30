@@ -72,22 +72,34 @@ log "Limpando containers antigos..."
 docker-compose down > /dev/null 2>&1 || true
 docker-compose -f docker-compose.dev.yml down > /dev/null 2>&1 || true
 
+# Verificar disponibilidade de portas
+log "Verificando disponibilidade de portas..."
+if ! ./scripts/check-ports.sh > /dev/null 2>&1; then
+    warn "Algumas portas podem estar em uso. Continuando mesmo assim..."
+    echo "Execute 'make check-ports' para ver detalhes"
+fi
+
 if [ "$ENVIRONMENT" = "dev" ]; then
     log "Iniciando serviços de desenvolvimento..."
     docker-compose -f docker-compose.dev.yml up -d
     
+    # Carregar variáveis de ambiente
+    if [ -f ".env" ]; then
+        source .env
+    fi
+    
     # Aguardar serviços ficarem disponíveis
-    wait_for_service "PostgreSQL" 5432
-    wait_for_service "RabbitMQ" 5672
-    wait_for_service "Redis" 6379
+    wait_for_service "PostgreSQL" "${POSTGRES_PORT:-1700}"
+    wait_for_service "RabbitMQ" "${RABBITMQ_AMQP_PORT:-1800}"
+    wait_for_service "Redis" "${REDIS_PORT:-6379}"
     
     echo ""
     log "✅ Serviços de desenvolvimento iniciados com sucesso!"
     echo ""
     echo "📊 Serviços disponíveis:"
-    echo "  🐘 PostgreSQL: localhost:5432"
-    echo "  🐰 RabbitMQ Management: http://localhost:15672 (aloy/aloy123)"
-    echo "  🔴 Redis: localhost:6379"
+    echo "  🐘 PostgreSQL: localhost:${POSTGRES_PORT:-1700}"
+    echo "  🐰 RabbitMQ Management: http://localhost:${RABBITMQ_UI_PORT:-1801} (${RABBITMQ_USER:-aloy}/${RABBITMQ_PASSWORD:-aloy123})"
+    echo "  🔴 Redis: localhost:${REDIS_PORT:-6379}"
     echo ""
     echo "Para iniciar os serviços da aplicação, execute:"
     echo "  cd apps/core && go run cmd/main.go"
@@ -99,6 +111,11 @@ if [ "$ENVIRONMENT" = "dev" ]; then
 elif [ "$ENVIRONMENT" = "prod" ]; then
     log "Iniciando ambiente de produção..."
     
+    # Carregar variáveis de ambiente
+    if [ -f ".env" ]; then
+        source .env
+    fi
+    
     # Verificar se as imagens existem, senão construir
     log "Construindo imagens Docker..."
     docker-compose build
@@ -107,12 +124,12 @@ elif [ "$ENVIRONMENT" = "prod" ]; then
     docker-compose up -d
     
     # Aguardar serviços ficarem disponíveis
-    wait_for_service "PostgreSQL" 5432
-    wait_for_service "RabbitMQ" 5672
-    wait_for_service "Redis" 6379
-    wait_for_service "Core API" 8080
-    wait_for_service "NLP Service" 8001
-    wait_for_service "System Monitor" 8002
+    wait_for_service "PostgreSQL" "${POSTGRES_PORT:-1700}"
+    wait_for_service "RabbitMQ" "${RABBITMQ_AMQP_PORT:-1800}"
+    wait_for_service "Redis" "${REDIS_PORT:-6379}"
+    wait_for_service "Core API" "${ALOY_CORE_PORT:-1100}"
+    wait_for_service "NLP Service" "${ALOY_NLP_PORT:-1200}"
+    wait_for_service "System Monitor" "${ALOY_SYSTEM_MONITOR_PORT:-1300}"
     wait_for_service "Nginx" 80
     
     echo ""
@@ -122,7 +139,9 @@ elif [ "$ENVIRONMENT" = "prod" ]; then
     echo "  🚀 API Principal: http://localhost (via Nginx)"
     echo "  🧠 NLP Service: http://localhost/nlp"
     echo "  📊 System Monitor: http://localhost/monitor"
-    echo "  🐰 RabbitMQ Management: http://localhost:15672 (aloy/aloy123)"
+    echo "  ⏰ Scheduler: http://localhost/scheduler"
+    echo "  🔄 Task Sync: http://localhost/tasksync"
+    echo "  🐰 RabbitMQ Management: http://localhost:${RABBITMQ_UI_PORT:-1801} (${RABBITMQ_USER:-aloy}/${RABBITMQ_PASSWORD:-aloy123})"
     echo ""
     echo "Para ver logs: docker-compose logs -f [serviço]"
     echo "Para parar: ./scripts/stop.sh"

@@ -6,14 +6,14 @@ services:
     image: postgres:15-alpine
     container_name: aloy_postgres_dev
     environment:
-      POSTGRES_DB: aloy_dev
-      POSTGRES_USER: aloy
-      POSTGRES_PASSWORD: aloy123
+      POSTGRES_DB: ${POSTGRES_DB}_dev
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_dev_data:/var/lib/postgresql/data
       - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT}:5432"
     networks:
       - aloy_dev_network
 
@@ -22,13 +22,13 @@ services:
     image: rabbitmq:3.12-management-alpine
     container_name: aloy_rabbitmq_dev
     environment:
-      RABBITMQ_DEFAULT_USER: aloy
-      RABBITMQ_DEFAULT_PASS: aloy123
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
     volumes:
       - rabbitmq_dev_data:/var/lib/rabbitmq
     ports:
-      - "5672:5672"
-      - "15672:15672"
+      - "${RABBITMQ_AMQP_PORT}:5672"
+      - "${RABBITMQ_UI_PORT}:15672"
     networks:
       - aloy_dev_network
 
@@ -36,11 +36,11 @@ services:
   redis:
     image: redis:7-alpine
     container_name: aloy_redis_dev
-    command: redis-server --appendonly yes --requirepass aloy123
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
     volumes:
       - redis_dev_data:/data
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT}:6379"
     networks:
       - aloy_dev_network
 

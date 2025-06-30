@@ -133,6 +133,10 @@ setup_environment() {
     log "Sincronizando variáveis de ambiente..."
     ./scripts/env-manager.sh generate --force
     
+    # Gerar configuração do Nginx
+    log "Gerando configuração do Nginx..."
+    ./scripts/generate-nginx-config.sh
+    
     # Validar configuração
     ./scripts/env-manager.sh check
     

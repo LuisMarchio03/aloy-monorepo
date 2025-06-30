@@ -6,18 +6,18 @@ services:
     image: postgres:15-alpine
     container_name: aloy_postgres
     environment:
-      POSTGRES_DB: aloy
-      POSTGRES_USER: aloy
-      POSTGRES_PASSWORD: aloy123
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
-      - "1700:5432"
+      - "${POSTGRES_PORT}:5432"
     networks:
       - aloy_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U aloy"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -27,13 +27,13 @@ services:
     image: rabbitmq:3.12-management-alpine
     container_name: aloy_rabbitmq
     environment:
-      RABBITMQ_DEFAULT_USER: aloy
-      RABBITMQ_DEFAULT_PASS: aloy123
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     ports:
-      - "1800:5672"
-      - "1801:15672"
+      - "${RABBITMQ_AMQP_PORT}:5672"
+      - "${RABBITMQ_UI_PORT}:15672"
     networks:
       - aloy_network
     healthcheck:
@@ -46,11 +46,11 @@ services:
   redis:
     image: redis:7-alpine
     container_name: aloy_redis
-    command: redis-server --appendonly yes --requirepass aloy123
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
     volumes:
       - redis_data:/data
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT}:6379"
     networks:
       - aloy_network
     healthcheck:
@@ -68,16 +68,16 @@ services:
     environment:
       - DB_HOST=postgres
       - DB_PORT=5432
-      - DB_NAME=aloy
-      - DB_USER=aloy
-      - DB_PASSWORD=aloy123
-      - RABBITMQ_URL=amqp://aloy:aloy123@rabbitmq:5672/
+      - DB_NAME=${POSTGRES_DB}
+      - DB_USER=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@rabbitmq:5672/
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - REDIS_PASSWORD=aloy123
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
       - PORT=8080
     ports:
-      - "1100:8080"
+      - "${ALOY_CORE_PORT}:8080"
     depends_on:
       postgres:
         condition: service_healthy
@@ -97,12 +97,12 @@ services:
     container_name: aloy_nlp
     environment:
       - PORT=8001
-      - RABBITMQ_URL=amqp://aloy:aloy123@rabbitmq:5672/
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@rabbitmq:5672/
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - REDIS_PASSWORD=aloy123
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
     ports:
-      - "1200:8001"
+      - "${ALOY_NLP_PORT}:8001"
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -119,12 +119,15 @@ services:
       dockerfile: docker/scheduler/Dockerfile
     container_name: aloy_scheduler
     environment:
-      - RABBITMQ_URL=amqp://aloy:aloy123@rabbitmq:5672/
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@rabbitmq:5672/
       - DB_HOST=postgres
       - DB_PORT=5432
-      - DB_NAME=aloy
-      - DB_USER=aloy
-      - DB_PASSWORD=aloy123
+      - DB_NAME=${POSTGRES_DB}
+      - DB_USER=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - PORT=${ALOY_SCHEDULER_PORT}
+    ports:
+      - "${ALOY_SCHEDULER_PORT}:${ALOY_SCHEDULER_PORT}"
     depends_on:
       postgres:
         condition: service_healthy
@@ -142,12 +145,12 @@ services:
     container_name: aloy_sysmonitor
     environment:
       - PORT=8002
-      - RABBITMQ_URL=amqp://aloy:aloy123@rabbitmq:5672/
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@rabbitmq:5672/
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - REDIS_PASSWORD=aloy123
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
     ports:
-      - "1300:8002"
+      - "${ALOY_SYSTEM_MONITOR_PORT}:8002"
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -164,12 +167,15 @@ services:
       dockerfile: docker/tasksync/Dockerfile
     container_name: aloy_tasksync
     environment:
-      - RABBITMQ_URL=amqp://aloy:aloy123@rabbitmq:5672/
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@rabbitmq:5672/
       - DB_HOST=postgres
       - DB_PORT=5432
-      - DB_NAME=aloy
-      - DB_USER=aloy
-      - DB_PASSWORD=aloy123
+      - DB_NAME=${POSTGRES_DB}
+      - DB_USER=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - PORT=${ALOY_TASK_SYNC_PORT}
+    ports:
+      - "${ALOY_TASK_SYNC_PORT}:${ALOY_TASK_SYNC_PORT}"
     depends_on:
       postgres:
         condition: service_healthy
