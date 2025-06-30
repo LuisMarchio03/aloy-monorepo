@@ -1,0 +1,15 @@
+[submodule "apps/core"]
+	path = apps/core
+	url = https://github.com/LuisMarchio03/aloy-core-go-v0
+[submodule "modules/tasksync"]
+	path = modules/tasksync
+	url = https://github.com/LuisMarchio03/aloy-task-sync
+[submodule "modules/nlp"]
+	path = modules/nlp
+	url = https://github.com/LuisMarchio03/aloy-nlp-python-v1
+[submodule "modules/sysmonitor"]
+	path = modules/sysmonitor
+	url = https://github.com/LuisMarchio03/aloy-system-monitor-go-v0
+[submodule "modules/scheduler"]
+	path = modules/scheduler
+	url = https://github.com/LuisMarchio03/aloy-scheduler

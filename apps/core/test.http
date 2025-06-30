@@ -1,0 +1,6 @@
+POST http://localhost:1100/commands
+Content-Type: application/json
+
+{
+  "message": "Ligar a luz do quarto"
+}

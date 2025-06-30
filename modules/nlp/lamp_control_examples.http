@@ -1,0 +1,31 @@
+### Testar API NLP - Comando Lamp Control
+POST http://localhost:1200/interpret
+Content-Type: application/json
+
+{
+  "message": "Acenda a luz da sala"
+}
+
+### Testar API NLP - Comando Lamp Control com cor
+POST http://localhost:1200/interpret
+Content-Type: application/json
+
+{
+  "message": "Mude a luz do quarto para azul"
+}
+
+### Testar API NLP - Comando Lamp Control com intensidade
+POST http://localhost:1200/interpret
+Content-Type: application/json
+
+{
+  "message": "Diminua a intensidade da luz da cozinha para 30%"
+}
+
+### Testar API NLP - Comando Lamp Control para desligar
+POST http://localhost:1200/interpret
+Content-Type: application/json
+
+{
+  "message": "Apague todas as luzes do apartamento"
+}

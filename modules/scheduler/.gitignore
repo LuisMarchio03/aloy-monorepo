@@ -1,0 +1,9 @@
+# .gitignore
+node_modules/
+dist/
+.env
+
+# Google API Credentials
+client_secret_810700601167-kkrd2g1n9p1hgg9v42rsl0rjr961bpd5.apps.googleusercontent.com
+credentials.json
+token.json
